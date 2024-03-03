@@ -18,6 +18,14 @@ def get_unique_short_id():
     return short_url
 
 
+@app.route('/<short_id>')
+def accept_url_view(short_id):
+    url = URLMap.query.filter_by(short=short_id).first()
+    if url:
+        return redirect(url.original)
+    abort(404)
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index_view():
     form = UrlForm()
@@ -41,11 +49,3 @@ def index_view():
         db.session.commit()
         return render_template('index.html', form=form, data=get_obj)
     return render_template('index.html', form=form)
-
-
-@app.route('/<short_id>')
-def accept_url_view(short_id):
-    url = URLMap.query.filter_by(short=short_id).first()
-    if url:
-        return redirect(url.original)
-    abort(404)
