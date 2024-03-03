@@ -55,7 +55,7 @@
         <p>
           {% if data %}
           <h5 class="text-center">Ваша новая ссылка готова</h5>
-          <a href="http://localhost/{{ data.short}}"> https://localhost/{{ data.short }}</a>
+          <a href="{{ url_for('accept_url_view', short_id=data.short) }}">https://localhost/{{ data.short }}</a>
           {% endif %}
         </p>
       </div>
