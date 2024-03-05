@@ -1,6 +1,6 @@
 from flask import abort, flash, redirect, render_template
 
-from . import app, db
+from . import app
 from .forms import UrlForm
 from .models import URLMap
 from .exceptions import DublicateCustomId, NotValidCustomId
