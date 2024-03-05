@@ -3,6 +3,7 @@ from flask import jsonify, request
 from . import app
 from .models import URLMap
 from .error_handlers import InvalidAPIUsage
+from .exceptions import DublicateCustomId, NotValidCustomId
 
 
 @app.route('/api/id/', methods=['POST'])
@@ -11,7 +12,15 @@ def create_short_url():
     if not data:
         raise InvalidAPIUsage('Отсутствует тело запроса')
 
-    save_obj = URLMap.save(data)
+    if 'url' not in data:
+        raise InvalidAPIUsage('\"url\" является обязательным полем!')
+
+    obj = URLMap()
+    obj.from_dict(data)
+    try:
+        save_obj = URLMap.save(obj)
+    except (DublicateCustomId, NotValidCustomId) as error:
+        raise InvalidAPIUsage(*error.args)
     return (
         jsonify(
             {
@@ -25,7 +34,7 @@ def create_short_url():
 
 @app.route('/api/id/<string:short_id>/', methods=['GET'])
 def get_original_url(short_id):
-    get_obj = URLMap.query.filter_by(short=short_id).first()
+    get_obj = URLMap.get('short', short_id)
     if not get_obj:
         raise InvalidAPIUsage('Указанный id не найден', 404)
     return jsonify({'url': get_obj.original}), 200

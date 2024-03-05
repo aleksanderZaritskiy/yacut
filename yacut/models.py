@@ -12,6 +12,7 @@ from .constants import (
     ORIGINAL_LENGTH,
     MAX_ITERATION_DEPT,
 )
+from .exceptions import DublicateCustomId, NotValidCustomId
 
 
 class URLMap(db.Model):
@@ -36,31 +37,22 @@ class URLMap(db.Model):
     def get(name, value):
         return URLMap.query.filter_by(**{name: value}).first()
 
-    @staticmethod
-    def save(data):
-        if 'url' not in data:
-            raise InvalidAPIUsage('\"url\" является обязательным полем!')
-
-        if 'custom_id' in data:
-
-            if URLMap.get('short', data['custom_id']):
-                raise InvalidAPIUsage(
-                    'Предложенный вариант короткой ссылки уже существует.'
-                )
-
-            if data.get('custom_id') and valid_custom_id(data['custom_id']):
-                raise InvalidAPIUsage(
-                    'Указано недопустимое имя для короткой ссылки'
-                )
-        if 'custom_id' not in data or not data.get('custom_id'):
-            data['custom_id'] = URLMap.get_unique_short_id()
-
-        get_obj = URLMap.get('original', data['url'])
+    def save(self):
+        if self.short and valid_custom_id(self.short):
+            raise NotValidCustomId(
+                'Указано недопустимое имя для короткой ссылки'
+            )
+        if URLMap.get('short', self.short):
+            raise DublicateCustomId(
+                'Предложенный вариант короткой ссылки уже существует.'
+            )
+        if not self.short:
+            self.short = URLMap.get_unique_short_id()
+        get_obj = URLMap.get('original', self.original)
         if get_obj:
-            get_obj.short = data['custom_id']
+            get_obj.short = self.short
         else:
-            get_obj = URLMap()
-            get_obj.from_dict(data)
+            get_obj = self
             db.session.add(get_obj)
         db.session.commit()
         return get_obj
@@ -72,7 +64,5 @@ class URLMap(db.Model):
         )
 
     def from_dict(self, data):
-        attrs_name = {'url': 'original', 'custom_id': 'short'}
-        for field in attrs_name:
-            if field in data:
-                self.__dict__[attrs_name[field]] = data[field]
+        self.original = data['url']
+        self.short = data.get('custom_id')

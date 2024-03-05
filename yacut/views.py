@@ -3,6 +3,7 @@ from flask import abort, flash, redirect, render_template
 from . import app, db
 from .forms import UrlForm
 from .models import URLMap
+from .exceptions import DublicateCustomId, NotValidCustomId
 
 
 @app.route('/<short_id>')
@@ -17,20 +18,17 @@ def accept_url_view(short_id):
 def index_view():
     form = UrlForm()
     if form.validate_on_submit():
-        custom_id = form.custom_id.data
-        short_exists = URLMap.get('short', custom_id)
-        if not custom_id:
-            custom_id = URLMap.get_unique_short_id()
-        elif short_exists:
-            flash('Предложенный вариант короткой ссылки уже существует.')
+        obj = URLMap()
+        form_data = {
+            'url': form.original_link.data,
+            'custom_id': form.custom_id.data,
+        }
+        obj.from_dict(form_data)
+        try:
+            save_obj = URLMap.save(obj)
+        except (DublicateCustomId, NotValidCustomId) as error:
+            flash(*error.args)
             return render_template('index.html', form=form)
-        get_obj = URLMap.get('original', form.original_link.data)
-        if get_obj:
-            get_obj.short = custom_id
-        else:
-            get_obj = URLMap(original=form.original_link.data, short=custom_id)
-            db.session.add(get_obj)
 
-        db.session.commit()
-        return render_template('index.html', form=form, data=get_obj)
+        return render_template('index.html', form=form, data=save_obj)
     return render_template('index.html', form=form)
