@@ -10,3 +10,11 @@ class DublicateCustomId(Exception):
     """
 
     pass
+
+
+class MaxIterationDept(Exception):
+    """Возникает когда все возможные
+    варианты коротких ссылок уже существуют
+    """
+
+    pass

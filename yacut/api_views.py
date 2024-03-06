@@ -3,7 +3,7 @@ from flask import jsonify, request
 from . import app
 from .models import URLMap
 from .error_handlers import InvalidAPIUsage
-from .exceptions import DublicateCustomId, NotValidCustomId
+from .exceptions import DublicateCustomId, NotValidCustomId, MaxIterationDept
 
 
 @app.route('/api/id/', methods=['POST'])
@@ -16,10 +16,10 @@ def create_short_url():
         raise InvalidAPIUsage('\"url\" является обязательным полем!')
 
     obj = URLMap()
-    obj.from_dict(data)
+    URLMap.from_dict(obj, data)
     try:
         save_obj = URLMap.save(obj)
-    except (DublicateCustomId, NotValidCustomId) as error:
+    except (DublicateCustomId, NotValidCustomId, MaxIterationDept) as error:
         raise InvalidAPIUsage(*error.args)
     return (
         jsonify(
