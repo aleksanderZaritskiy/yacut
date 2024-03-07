@@ -17,7 +17,7 @@ def create_short_url():
 
     obj = URLMap.from_dict(data)
     try:
-        save_obj = URLMap.save(obj)
+        save_obj = obj.save()
     except (DublicateCustomId, NotValidCustomId, MaxIterationDept) as error:
         raise InvalidAPIUsage(*error.args)
     return (

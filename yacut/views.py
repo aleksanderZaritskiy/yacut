@@ -25,7 +25,7 @@ def index_view():
         }
         obj = URLMap.from_dict(form_data)
         try:
-            save_obj = URLMap.save(obj)
+            save_obj = obj.save()
         except (
             DublicateCustomId,
             NotValidCustomId,
