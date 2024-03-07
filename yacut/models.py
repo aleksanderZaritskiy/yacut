@@ -22,24 +22,20 @@ class URLMap(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     def save(self):
-        if self.short and not URLMap.valid_custom_id(self.short):
-            raise NotValidCustomId(
-                'Указано недопустимое имя для короткой ссылки'
-            )
-        if URLMap.get('short', self.short):
-            raise DublicateCustomId(
-                'Предложенный вариант короткой ссылки уже существует.'
-            )
-        if not self.short:
-            self.short = URLMap.get_unique_short_id()
-        get_obj = URLMap.get('original', self.original)
-        if get_obj:
-            get_obj.short = self.short
-        else:
-            get_obj = self
-            db.session.add(get_obj)
+        with db.session.no_autoflush:
+            if self.short and not URLMap.valid_custom_id(self.short):
+                raise NotValidCustomId(
+                    'Указано недопустимое имя для короткой ссылки'
+                )
+            if URLMap.get('short', self.short):
+                raise DublicateCustomId(
+                    'Предложенный вариант короткой ссылки уже существует.'
+                )
+            if not self.short:
+                self.short = URLMap.get_unique_short_id()
+        db.session.add(self)
         db.session.commit()
-        return get_obj
+        return self
 
     def to_dict(self):
         return dict(
@@ -68,6 +64,11 @@ class URLMap(db.Model):
         return re.match(PATTERN, custom_id)
 
     @staticmethod
-    def from_dict(obj, data):
-        obj.original = data['url']
-        obj.short = data.get('custom_id')
+    def from_dict(data):
+        obj = URLMap.get('original', data['url'])
+        if obj:
+            obj.short = data.get('custom_id')
+        else:
+            obj = URLMap(original=data['url'], short=data.get('custom_id'))
+
+        return obj

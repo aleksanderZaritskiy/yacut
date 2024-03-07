@@ -15,8 +15,7 @@ def create_short_url():
     if 'url' not in data:
         raise InvalidAPIUsage('\"url\" является обязательным полем!')
 
-    obj = URLMap()
-    URLMap.from_dict(obj, data)
+    obj = URLMap.from_dict(data)
     try:
         save_obj = URLMap.save(obj)
     except (DublicateCustomId, NotValidCustomId, MaxIterationDept) as error:

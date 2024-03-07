@@ -19,12 +19,11 @@ def index_view():
     form = UrlForm()
     save_obj = None
     if form.validate_on_submit():
-        obj = URLMap()
         form_data = {
             'url': form.original_link.data,
             'custom_id': form.custom_id.data,
         }
-        URLMap.from_dict(obj, form_data)
+        obj = URLMap.from_dict(form_data)
         try:
             save_obj = URLMap.save(obj)
         except (
